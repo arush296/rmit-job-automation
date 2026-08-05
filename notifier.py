@@ -188,7 +188,10 @@ EMAIL_TEMPLATE = Template("""\
     {% endfor %}
   </div>
   <div class="footer">
-    RMIT Job Automation &bull; System Check {{ check_time }}
+    RMIT Job Automation &bull; System Check {{ check_time }}<br>
+    <span style="font-size: 10.5px; opacity: 0.8; margin-top: 4px; display: inline-block;">
+      Disclaimer: This is an independent personal project and is not affiliated with, endorsed by, or associated with RMIT University or Workday.
+    </span>
   </div>
 </div>
 </body>

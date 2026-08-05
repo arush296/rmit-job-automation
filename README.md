@@ -2,6 +2,9 @@
 
 Automated monitoring of the [RMIT Jobs On Campus](https://rmit.wd3.myworkdayjobs.com/en-US/Job_On_Campus/jobs) portal. Get email notifications whenever new part-time/casual campus jobs are posted.
 
+> [!NOTE]
+> **Disclaimer:** This is an independent personal open-source project created strictly for personal job search automation. It is not affiliated with, endorsed by, sponsored by, or in any way officially connected with RMIT University or Workday, Inc.
+
 ## Features
 
 - **Automatic polling** of RMIT's Workday job board via their JSON API
