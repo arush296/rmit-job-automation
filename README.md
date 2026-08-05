@@ -1,4 +1,4 @@
-# RMIT Job Automation 🎓
+# RMIT Job Automation 
 
 Automated monitoring of the [RMIT Jobs On Campus](https://rmit.wd3.myworkdayjobs.com/en-US/Job_On_Campus/jobs) portal. Get email notifications whenever new part-time/casual campus jobs are posted.
 
