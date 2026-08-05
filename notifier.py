@@ -23,7 +23,12 @@ EMAIL_TEMPLATE = Template("""\
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <style>
+  :root {
+    color-scheme: light;
+  }
   body { 
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: #f4f5f7; 
@@ -33,99 +38,80 @@ EMAIL_TEMPLATE = Template("""\
     -webkit-font-smoothing: antialiased;
   }
   .container { 
-    max-width: 580px; 
+    max-width: 560px; 
     margin: 0 auto; 
     background: #ffffff;
-    border-radius: 12px;
+    border-radius: 10px;
     overflow: hidden;
     border: 1px solid #e1e4e8;
-    box-shadow: 0 4px 16px rgba(0, 0, 84, 0.06);
   }
   .header { 
-    background-color: #000054;
-    border-bottom: 4px solid #E60028;
-    color: #ffffff; 
-    padding: 28px 32px;
+    background-color: #070759 !important;
+    border-bottom: 4px solid #E70129 !important;
+    color: #ffffff !important; 
+    padding: 24px 28px;
   }
   .header-brand {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #E60028;
-    margin-bottom: 6px;
+    color: #E70129 !important;
+    margin-bottom: 4px;
   }
   .header h1 { 
     margin: 0; 
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
-    letter-spacing: -0.3px;
-    color: #ffffff;
-  }
-  .header p {
-    margin: 6px 0 0; 
-    color: rgba(255, 255, 255, 0.75); 
-    font-size: 13.5px;
+    color: #ffffff !important;
   }
   .content { 
-    padding: 28px 32px;
-  }
-  .summary {
-    background-color: #f8f9fa;
-    border-left: 3px solid #000054;
-    border-radius: 0 6px 6px 0;
-    padding: 12px 16px;
-    margin-bottom: 24px;
-    font-size: 13.5px;
-    line-height: 1.5;
-    color: #4a5568;
+    padding: 24px 28px;
   }
   .job-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 20px 22px;
-    margin-bottom: 18px;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .job-card:last-child {
+    margin-bottom: 0;
   }
   .job-title { 
-    font-size: 17px; 
-    font-weight: 600;
-    line-height: 1.35;
+    font-size: 16px; 
+    font-weight: 700;
+    line-height: 1.4;
     margin: 0 0 10px;
   }
   .job-title a { 
-    color: #000054; 
+    color: #070759; 
     text-decoration: none;
   }
   .job-meta { 
-    font-size: 12.5px; 
-    color: #64748b;
-    margin-bottom: 14px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
+    font-size: 13px; 
+    color: #475569;
+    margin-bottom: 12px;
   }
   .meta-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    display: inline-block;
+    margin-right: 16px;
   }
   .meta-label {
     font-weight: 600;
-    color: #475569;
+    color: #070759;
   }
   .bullet-fields {
-    margin-top: 12px;
-    margin-bottom: 16px;
-    line-height: 1.8;
+    margin-top: 10px;
+    margin-bottom: 14px;
   }
   .tag {
     display: inline-block;
     background: #f1f5f9;
-    color: #1e293b;
-    padding: 3px 10px;
-    border-radius: 6px;
-    font-size: 12px;
+    color: #070759;
+    padding: 3px 9px;
+    border-radius: 4px;
+    font-size: 11.5px;
     font-weight: 500;
     margin-right: 4px;
     margin-bottom: 4px;
@@ -133,36 +119,38 @@ EMAIL_TEMPLATE = Template("""\
   }
   .apply-btn {
     display: inline-block;
-    padding: 9px 20px;
-    background: #E60028;
+    padding: 8px 18px;
+    background: #E70129 !important;
     color: #ffffff !important;
     text-decoration: none;
-    border-radius: 6px;
-    font-size: 13px;
+    border-radius: 5px;
+    font-size: 12.5px;
     font-weight: 600;
-    letter-spacing: 0.2px;
   }
   .footer { 
     background-color: #fafafa;
-    padding: 16px 32px;
+    padding: 16px 28px;
     text-align: center;
-    font-size: 11.5px;
+    font-size: 11px;
     color: #94a3b8;
     border-top: 1px solid #f1f5f9;
+  }
+  .disclaimer {
+    font-size: 10px;
+    color: #a0aec0;
+    margin-top: 6px;
+    display: block;
+    line-height: 1.4;
   }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <div class="header-brand">RMIT UNIVERSITY</div>
-    <h1>New Campus Positions</h1>
-    <p>{{ jobs|length }} new opportunity listed on Jobs On Campus</p>
+  <div class="header" style="background-color: #070759 !important;">
+    <div class="header-brand" style="color: #E70129 !important;">RMIT JOBS ON CAMPUS</div>
+    <h1 style="color: #ffffff !important;">{{ jobs|length }} New Position{{ 's' if jobs|length > 1 else '' }} Posted</h1>
   </div>
   <div class="content">
-    <div class="summary">
-      New employment opportunities have just been posted to the RMIT Jobs On Campus portal.
-    </div>
     {% for job in jobs %}
     <div class="job-card">
       <h2 class="job-title">
@@ -183,14 +171,14 @@ EMAIL_TEMPLATE = Template("""\
         {% endfor %}
       </div>
       {% endif %}
-      <a href="{{ job.url }}" class="apply-btn">View Job & Apply &rarr;</a>
+      <a href="{{ job.url }}" class="apply-btn" style="background-color: #E70129 !important; color: #ffffff !important;">View Job & Apply &rarr;</a>
     </div>
     {% endfor %}
   </div>
   <div class="footer">
-    RMIT Job Automation &bull; System Check {{ check_time }}<br>
-    <span style="font-size: 10.5px; opacity: 0.8; margin-top: 4px; display: inline-block;">
-      Disclaimer: This is an independent personal project and is not affiliated with, endorsed by, or associated with RMIT University or Workday.
+    RMIT Job Automation &bull; System Check {{ check_time }}
+    <span class="disclaimer">
+      Independent personal project. Not affiliated with, endorsed by, or associated with RMIT University or Workday.
     </span>
   </div>
 </div>
