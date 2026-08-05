@@ -33,6 +33,11 @@ cp .env.example .env
 2. Generate an [App Password](https://myaccount.google.com/apppasswords) (select "Mail")
 3. Use the 16-character app password as `SMTP_PASSWORD` in `.env`
 
+> [!WARNING]
+> **Check your Spam / Junk folder!**
+> Email providers (especially Gmail) may initially route automated notification emails to your Spam folder. 
+> Make sure to open the first notification email and click **"Report not spam"** or add your sender address to your contacts so you don't miss future job alerts.
+
 ### 3. Test Locally
 
 ```bash
