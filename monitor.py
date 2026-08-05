@@ -174,6 +174,11 @@ def main():
         help="Run without sending emails (prints to console and saves HTML preview)",
     )
     parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Inject a test job to verify email sending and notification styling",
+    )
+    parser.add_argument(
         "--debug",
         action="store_true",
         help="Enable debug-level logging",
@@ -183,6 +188,26 @@ def main():
 
     if args.debug:
         logging.getLogger().setLevel(logging.DEBUG)
+
+    if args.test:
+        logger.info("🧪 Running in TEST mode (injecting a mock job posting)")
+        db.init_db()
+        test_job = [{
+            "id": f"/job/test-position-{int(time.time())}",
+            "title": "🎓 TEST ROLE: Peer Learning Advisor / Student Assistant",
+            "location": "City Campus (Melbourne)",
+            "posted_date": "Posted Just Now",
+            "url": f"{config.WORKDAY_JOB_PAGE_URL}/jobs",
+            "bullet_fields": "Casual | $38.50/hr | Flexible Hours | On Campus",
+            "description": "This is a test notification from your RMIT Job Automation pipeline to verify email delivery.",
+        }]
+        check_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        success = notifier.notify_new_jobs(jobs=test_job, dry_run=args.dry_run, check_time=check_time)
+        if success:
+            logger.info("✅ Test email sent successfully! Check your inbox.")
+        else:
+            logger.error("❌ Failed to send test email. Check your SMTP secrets.")
+        return
 
     if args.dry_run:
         logger.info("🔍 Running in DRY RUN mode (no emails will be sent)")
