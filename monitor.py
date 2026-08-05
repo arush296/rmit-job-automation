@@ -194,7 +194,7 @@ def main():
         db.init_db()
         test_job = [{
             "id": f"/job/test-position-{int(time.time())}",
-            "title": "🎓 TEST ROLE: Peer Learning Advisor / Student Assistant",
+            "title": "TEST ROLE: Peer Learning Advisor / Student Assistant",
             "location": "City Campus (Melbourne)",
             "posted_date": "Posted Just Now",
             "url": f"{config.WORKDAY_JOB_PAGE_URL}/jobs",
