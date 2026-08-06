@@ -13,7 +13,6 @@ venv/
 
 # Data
 data/
-resume/
 
 # IDE
 .vscode/
