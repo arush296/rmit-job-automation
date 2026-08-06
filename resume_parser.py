@@ -36,7 +36,7 @@ def get_resume_path() -> Optional[str]:
 
 def extract_resume_text(file_path: Optional[str] = None) -> str:
     """
-    Extract full text content from a resume file (PDF or TXT).
+    Extract full text content from a resume file (PDF or TXT) or env variable RESUME_TEXT.
 
     Args:
         file_path: Optional specific path to resume. If None, auto-detects from resume/ folder.
@@ -44,6 +44,12 @@ def extract_resume_text(file_path: Optional[str] = None) -> str:
     Returns:
         String containing extracted text, or empty string on failure.
     """
+    # Check if RESUME_TEXT environment variable is set (ideal for secure GitHub Secrets)
+    env_resume = os.getenv("RESUME_TEXT", "").strip()
+    if env_resume:
+        logger.info("Extracted %d characters from RESUME_TEXT environment variable", len(env_resume))
+        return env_resume
+
     if file_path is None:
         file_path = get_resume_path()
 
