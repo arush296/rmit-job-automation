@@ -117,6 +117,81 @@ EMAIL_TEMPLATE = Template("""\
     margin-bottom: 4px;
     border: 1px solid #e2e8f0;
   }
+  
+  /* ─── Phase 2 AI Match Styles ────────────────────────────────────────── */
+  .match-box {
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-top: 14px;
+    margin-bottom: 14px;
+  }
+  .match-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .score-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #ffffff !important;
+  }
+  .score-high { background-color: #16a34a !important; }
+  .score-mid { background-color: #d97706 !important; }
+  .score-low { background-color: #dc2626 !important; }
+  
+  .match-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #070759;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  .match-text {
+    font-size: 12.5px;
+    color: #334155;
+    line-height: 1.45;
+    margin: 0;
+  }
+  .skill-tag-matched {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+  .skill-tag-missing {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+  .linkedin-section {
+    background-color: #f0f4f8;
+    border-left: 3px solid #0077b5;
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    margin-top: 12px;
+  }
+  .linkedin-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0077b5;
+    margin-bottom: 4px;
+  }
+  .linkedin-link {
+    font-size: 12px;
+    color: #0077b5;
+    text-decoration: none;
+  }
+  .linkedin-link:hover {
+    text-decoration: underline;
+  }
+
   .apply-btn {
     display: inline-block;
     padding: 8px 18px;
@@ -126,6 +201,7 @@ EMAIL_TEMPLATE = Template("""\
     border-radius: 5px;
     font-size: 12.5px;
     font-weight: 600;
+    margin-top: 6px;
   }
   .footer { 
     background-color: #fafafa;
@@ -171,7 +247,59 @@ EMAIL_TEMPLATE = Template("""\
         {% endfor %}
       </div>
       {% endif %}
-      <a href="{{ job.url }}" class="apply-btn" style="background-color: #E70129 !important; color: #ffffff !important;">View Job & Apply &rarr;</a>
+
+      {% if job.fit_analysis %}
+      <div class="match-box">
+        <div class="match-header">
+          <span class="match-section-title" style="margin: 0;">AI Resume Match Analysis</span>
+          <span class="score-badge {% if job.fit_analysis.fit_percentage >= 75 %}score-high{% elif job.fit_analysis.fit_percentage >= 50 %}score-mid{% else %}score-low{% endif %}">
+            {{ job.fit_analysis.fit_percentage }}% Match
+          </span>
+        </div>
+        
+        {% if job.fit_analysis.fit_reasoning %}
+        <p class="match-text" style="margin-bottom: 8px;">{{ job.fit_analysis.fit_reasoning }}</p>
+        {% endif %}
+
+        {% if job.fit_analysis.matched_skills %}
+        <div class="match-section-title">Matched Skills</div>
+        <div>
+          {% for skill in job.fit_analysis.matched_skills %}
+          <span class="tag skill-tag-matched">{{ skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if job.fit_analysis.missing_skills %}
+        <div class="match-section-title">Skills to Highlight / Bridge</div>
+        <div>
+          {% for skill in job.fit_analysis.missing_skills %}
+          <span class="tag skill-tag-missing">{{ skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if job.fit_analysis.application_tip %}
+        <div class="match-section-title">Application Tip</div>
+        <p class="match-text"><em>{{ job.fit_analysis.application_tip }}</em></p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if job.linkedin_profiles %}
+      <div class="linkedin-section">
+        <div class="linkedin-title">RMIT Network & Alumni in this Role:</div>
+        {% for profile in job.linkedin_profiles %}
+        <div style="margin-bottom: 4px;">
+          <a href="{{ profile.link }}" class="linkedin-link" target="_blank">&rarr; {{ profile.name_title }}</a>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div style="margin-top: 14px;">
+        <a href="{{ job.url }}" class="apply-btn" style="background-color: #E70129 !important; color: #ffffff !important;">View Job & Apply &rarr;</a>
+      </div>
     </div>
     {% endfor %}
   </div>

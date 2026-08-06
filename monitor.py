@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 
 import config
 import db
+import linkedin_finder
+import matcher
 import notifier
 import scraper
 
@@ -122,12 +124,27 @@ def run_monitor(dry_run: bool = False) -> None:
         logger.info("No new jobs since last check. All good!")
         return
 
-    # Step 4: Fetch full descriptions for new jobs (with rate limiting)
+    # Step 4: Fetch full descriptions, AI match analysis & LinkedIn network for new jobs
     for job in new_jobs:
-        logger.info("  → NEW: %s (%s)", job["title"], job["location"])
+        logger.info("  → Processing: %s (%s)", job["title"], job["location"])
         description = fetch_job_description(job["id"])
         job["description"] = description
-        time.sleep(0.5)  # Rate limit detail fetches
+        
+        # Phase 2: AI Resume Fit Analysis
+        fit_analysis = matcher.analyze_fit(
+            job_title=job["title"],
+            job_description=description or job["bullet_fields"],
+        )
+        job["fit_analysis"] = fit_analysis
+
+        # Phase 2: LinkedIn Network & Alumni Finder
+        linkedin_profiles = linkedin_finder.find_linkedin_profiles(
+            job_title=job["title"],
+            limit=3,
+        )
+        job["linkedin_profiles"] = linkedin_profiles
+
+        time.sleep(0.5)  # Rate limiting
 
     # Step 5: Store new jobs in DB
     for job in new_jobs:
@@ -190,16 +207,31 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
 
     if args.test:
-        logger.info("🧪 Running in TEST mode (injecting a mock job posting)")
+        logger.info("🧪 Running in TEST mode (injecting a mock job posting with Phase 2 AI matching)")
         db.init_db()
+        test_title = "TEST ROLE: Peer Learning Advisor / Student Assistant"
+        test_jd = "Assisting RMIT students with academic learning, peer support, software project guidance, teamwork, and program administration."
+        
+        fit_analysis = matcher.analyze_fit(
+            job_title=test_title,
+            job_description=test_jd,
+        )
+
+        linkedin_profiles = linkedin_finder.find_linkedin_profiles(
+            job_title="Peer Learning Advisor",
+            limit=3,
+        )
+
         test_job = [{
             "id": f"/job/test-position-{int(time.time())}",
-            "title": "TEST ROLE: Peer Learning Advisor / Student Assistant",
+            "title": test_title,
             "location": "City Campus (Melbourne)",
             "posted_date": "Posted Just Now",
             "url": f"{config.WORKDAY_JOB_PAGE_URL}/jobs",
             "bullet_fields": "Casual | $38.50/hr | Flexible Hours | On Campus",
-            "description": "This is a test notification from your RMIT Job Automation pipeline to verify email delivery.",
+            "description": test_jd,
+            "fit_analysis": fit_analysis,
+            "linkedin_profiles": linkedin_profiles,
         }]
         check_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         success = notifier.notify_new_jobs(jobs=test_job, dry_run=args.dry_run, check_time=check_time)
