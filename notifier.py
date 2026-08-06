@@ -251,7 +251,7 @@ EMAIL_TEMPLATE = Template("""\
       {% if job.fit_analysis %}
       <div class="match-box">
         <div class="match-header">
-          <span class="match-section-title" style="margin: 0;">AI Resume Match Analysis</span>
+          <span class="match-section-title" style="margin: 0;">Resume Analysis</span>
           <span class="score-badge {% if job.fit_analysis.fit_percentage >= 75 %}score-high{% elif job.fit_analysis.fit_percentage >= 50 %}score-mid{% else %}score-low{% endif %}">
             {{ job.fit_analysis.fit_percentage }}% Match
           </span>

@@ -9,9 +9,11 @@ Automated monitoring of the [RMIT Jobs On Campus](https://rmit.wd3.myworkdayjobs
 
 - **Automatic polling** of RMIT's Workday job board via their JSON API
 - **New job detection** using SQLite persistence across runs
-- **Email notifications** with a clean, branded HTML template
-- **GitHub Actions** scheduled workflow (every 2 hours, free)
-- `--dry-run` mode for testing without sending emails
+- **Resume Analysis** powered by Google Gemini (fit percentage, matched skills, skills to highlight, application tips)
+- **RMIT Networking Finder** with direct LinkedIn links to alumni & current staff in target roles
+- **Branded email notifications** formatted in official RMIT colors (`#070759` Navy / `#E70129` Red)
+- **GitHub Actions** scheduled workflow (every 2 hours, 100% free)
+- `--dry-run` and `--test` modes for instant testing
 
 ## Quick Start
 
@@ -23,7 +25,7 @@ cd rmitJobAutomation
 pip install -r requirements.txt
 ```
 
-### 2. Configure Email
+### 2. Configure Environment
 
 Copy `.env.example` to `.env` and fill in your details:
 
@@ -31,10 +33,10 @@ Copy `.env.example` to `.env` and fill in your details:
 cp .env.example .env
 ```
 
-**Gmail Setup:**
-1. Enable [2-Step Verification](https://myaccount.google.com/signinoptions/two-step-verification) on your Google account
-2. Generate an [App Password](https://myaccount.google.com/apppasswords) (select "Mail")
-3. Use the 16-character app password as `SMTP_PASSWORD` in `.env`
+**Required Credentials:**
+- **Gmail App Password**: For sending notification emails ([Get App Password](https://myaccount.google.com/apppasswords))
+- **Gemini API Key**: For AI resume analysis ([Get free key](https://aistudio.google.com/app/apikey))
+- **Resume**: Place your PDF resume in `resume/resume.pdf` (gitignored to protect your privacy)
 
 > [!WARNING]
 > **Check your Spam / Junk folder!**
@@ -44,11 +46,8 @@ cp .env.example .env
 ### 3. Test Locally
 
 ```bash
-# Dry run — checks API, detects new jobs, saves email preview (no email sent)
-python monitor.py --dry-run
-
-# With debug output
-python monitor.py --dry-run --debug
+# Test Phase 2 pipeline locally (resume parsing, AI analysis & email preview)
+python monitor.py --test --dry-run
 ```
 
 ### 4. Deploy to GitHub Actions
@@ -60,19 +59,22 @@ python monitor.py --dry-run --debug
    - `SMTP_PORT` → `587`
    - `SMTP_USER` → your Gmail address
    - `SMTP_PASSWORD` → your Gmail App Password
-   - `NOTIFICATION_EMAIL` → where to receive notifications
+   - `NOTIFICATION_EMAIL` → recipient email address
+   - `GEMINI_API_KEY` → your Gemini API Key
+   - `RESUME_TEXT` → your extracted resume text (keeps your resume 100% private)
 4. The workflow runs automatically every 2 hours, or trigger it manually from the **Actions** tab
 
 ## Project Structure
 
 ```
-├── monitor.py          # Main entry point
+├── monitor.py          # Main orchestrator
 ├── scraper.py          # Workday API client
 ├── db.py               # SQLite persistence
-├── notifier.py         # Email notifications
-├── config.py           # Configuration
-├── .env.example        # Environment template
-├── requirements.txt    # Python dependencies
+├── resume_parser.py    # PDF/TXT resume reader & env fallback
+├── matcher.py          # Gemini AI resume-to-JD fit analyzer
+├── linkedin_finder.py  # RMIT student & alumni LinkedIn finder
+├── notifier.py         # Email notification generator
+├── config.py           # Configuration & constants
 └── .github/workflows/
     └── monitor.yml     # GitHub Actions cron workflow
 ```
