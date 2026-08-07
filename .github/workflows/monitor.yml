@@ -2,8 +2,8 @@ name: RMIT Job Monitor
 
 on:
   schedule:
-    # Run every 2 hours
-    - cron: '0 */2 * * *'
+    # Run every 2 hours (at 14 minutes past the hour to avoid GitHub Actions queue delays)
+    - cron: '14 */2 * * *'
   workflow_dispatch:
     inputs:
       send_test_email:
