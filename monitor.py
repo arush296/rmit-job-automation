@@ -172,6 +172,7 @@ def run_monitor(dry_run: bool = False) -> None:
         logger.info("✅ Notification sent successfully!")
     else:
         logger.error("❌ Failed to send notification.")
+        sys.exit(1)
 
     # Summary
     total_in_db = db.get_job_count()
@@ -239,6 +240,7 @@ def main():
             logger.info("✅ Test email sent successfully! Check your inbox.")
         else:
             logger.error("❌ Failed to send test email. Check your SMTP secrets.")
+            sys.exit(1)
         return
 
     if args.dry_run:
