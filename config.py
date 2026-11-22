@@ -23,6 +23,8 @@ WORKDAY_PAGE_SIZE = 20  # Max jobs per API request
 REQUEST_TIMEOUT = 30  # Seconds
 MAX_RETRIES = 3
 RETRY_BACKOFF_FACTOR = 2  # Exponential backoff: 2s, 4s, 8s
+RATE_LIMIT_BACKOFF_SECONDS = 30
+MAX_RATE_LIMIT_WAIT_SECONDS = 300
 
 # ─── Email / SMTP ────────────────────────────────────────────────────────────
 

@@ -7,6 +7,9 @@ that powers Workday's candidate experience frontend.
 
 import logging
 import time
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from math import ceil
 from typing import Optional
 
 import requests
@@ -14,6 +17,23 @@ import requests
 import config
 
 logger = logging.getLogger(__name__)
+
+
+def _retry_after_seconds(header: str) -> float | None:
+    value = header.strip()
+    if not value:
+        return None
+    if value.isascii() and value.isdecimal():
+        return float(value)
+
+    try:
+        retry_at = parsedate_to_datetime(value)
+    except ValueError:
+        return None
+
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=timezone.utc)
+    return max(0, ceil((retry_at - datetime.now(timezone.utc)).total_seconds()))
 
 
 def fetch_job_listings(search_text: str = "", offset: int = 0) -> dict:
@@ -65,8 +85,26 @@ def fetch_job_listings(search_text: str = "", offset: int = 0) -> dict:
             last_exception = e
             if attempt < config.MAX_RETRIES:
                 wait_time = config.RETRY_BACKOFF_FACTOR ** attempt
+                if e.response is not None and e.response.status_code == 429:
+                    retry_after = _retry_after_seconds(
+                        e.response.headers.get("Retry-After", "")
+                    )
+                    if retry_after is None:
+                        wait_time = (
+                            config.RATE_LIMIT_BACKOFF_SECONDS
+                            * config.RETRY_BACKOFF_FACTOR ** (attempt - 1)
+                        )
+                    elif retry_after > config.MAX_RATE_LIMIT_WAIT_SECONDS:
+                        logger.error(
+                            "Workday requested a %gs wait, exceeding the %ds retry limit.",
+                            retry_after,
+                            config.MAX_RATE_LIMIT_WAIT_SECONDS,
+                        )
+                        raise
+                    else:
+                        wait_time = retry_after
                 logger.warning(
-                    "Request failed (attempt %d/%d): %s. Retrying in %ds...",
+                    "Request failed (attempt %d/%d): %s. Retrying in %gs...",
                     attempt,
                     config.MAX_RETRIES,
                     str(e),
