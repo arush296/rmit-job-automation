@@ -81,14 +81,7 @@ def fetch_job_description(external_path: str) -> str:
 
 
 def run_monitor(dry_run: bool = False) -> None:
-    """
-    Main monitoring cycle:
-    1. Initialize DB
-    2. Fetch current jobs from Workday API
-    3. Compare against known jobs in DB
-    4. Store new jobs
-    5. Send notification for new jobs
-    """
+    """Discover new jobs and send alerts for jobs awaiting notification."""
     check_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     logger.info("=" * 60)
@@ -102,76 +95,75 @@ def run_monitor(dry_run: bool = False) -> None:
 
     # Step 2: Fetch current listings from Workday
     logger.info("Fetching jobs from Workday API...")
+    fetch_failed = False
     try:
         raw_jobs = scraper.fetch_all_jobs()
     except Exception as e:
         logger.error("Failed to fetch jobs: %s", str(e))
-        sys.exit(1)
+        raw_jobs = []
+        fetch_failed = True
+    else:
+        logger.info("Jobs returned by API: %d", len(raw_jobs))
 
-    logger.info("Jobs returned by API: %d", len(raw_jobs))
+    new_jobs = {}
+    for raw_job in raw_jobs:
+        job = process_job_posting(raw_job)
+        if job["id"] not in known_ids:
+            new_jobs[job["id"]] = job
 
-    if not raw_jobs:
-        logger.info("No jobs currently posted. Nothing to do.")
+    pending_jobs = db.get_unnotified_jobs()
+    jobs_to_notify = list(new_jobs.values()) + pending_jobs
+    logger.info("New jobs found: %d. Pending alerts: %d", len(new_jobs), len(pending_jobs))
+
+    if not jobs_to_notify:
+        if fetch_failed:
+            sys.exit(1)
+        logger.info("No job alerts to send.")
         return
 
-    # Step 3: Process and identify new jobs
-    processed_jobs = [process_job_posting(job) for job in raw_jobs]
-    new_jobs = [job for job in processed_jobs if job["id"] not in known_ids]
-
-    logger.info("New jobs found: %d", len(new_jobs))
-
-    if not new_jobs:
-        logger.info("No new jobs since last check. All good!")
-        return
-
-    # Step 4: Fetch full descriptions, AI match analysis & LinkedIn network for new jobs
-    for job in new_jobs:
+    for job in jobs_to_notify:
         logger.info("  → Processing: %s (%s)", job["title"], job["location"])
-        description = fetch_job_description(job["id"])
-        job["description"] = description
-        
-        # Phase 2: AI Resume Fit Analysis
-        fit_analysis = matcher.analyze_fit(
-            job_title=job["title"],
-            job_description=description or job["bullet_fields"],
-        )
-        job["fit_analysis"] = fit_analysis
+        if job["id"] in new_jobs:
+            job["description"] = fetch_job_description(job["id"])
+            if not dry_run:
+                db.insert_job(
+                    job_id=job["id"],
+                    title=job["title"],
+                    location=job["location"],
+                    posted_date=job["posted_date"],
+                    url=job["url"],
+                    bullet_fields=job["bullet_fields"],
+                    description=job["description"],
+                )
 
-        # Phase 2: LinkedIn Network & Alumni Finder
-        linkedin_profiles = linkedin_finder.find_linkedin_profiles(
+        job["fit_analysis"] = matcher.analyze_fit(
+            job_title=job["title"],
+            job_description=job["description"] or job["bullet_fields"] or "",
+        )
+
+        job["linkedin_profiles"] = linkedin_finder.find_linkedin_profiles(
             job_title=job["title"],
             limit=3,
         )
-        job["linkedin_profiles"] = linkedin_profiles
 
         time.sleep(0.5)  # Rate limiting
 
-    # Step 5: Store new jobs in DB
-    for job in new_jobs:
-        db.insert_job(
-            job_id=job["id"],
-            title=job["title"],
-            location=job["location"],
-            posted_date=job["posted_date"],
-            url=job["url"],
-            bullet_fields=job["bullet_fields"],
-            description=job.get("description", ""),
-        )
-
-    # Step 6: Send notification
-    logger.info("Sending notification for %d new job(s)...", len(new_jobs))
+    logger.info("Sending notification for %d job(s)...", len(jobs_to_notify))
     success = notifier.notify_new_jobs(
-        jobs=new_jobs, dry_run=dry_run, check_time=check_time
+        jobs=jobs_to_notify, dry_run=dry_run, check_time=check_time
     )
 
-    if success:
-        # Mark jobs as notified
-        job_ids = [job["id"] for job in new_jobs]
-        if not dry_run:
-            db.mark_notified(job_ids)
-        logger.info("✅ Notification sent successfully!")
-    else:
+    if not success:
         logger.error("❌ Failed to send notification.")
+        sys.exit(1)
+
+    if dry_run:
+        logger.info("Notification preview generated.")
+    else:
+        db.mark_notified([job["id"] for job in jobs_to_notify])
+        logger.info("✅ Notification sent successfully!")
+
+    if fetch_failed:
         sys.exit(1)
 
     # Summary
